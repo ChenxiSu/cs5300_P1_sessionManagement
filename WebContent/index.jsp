@@ -7,35 +7,18 @@
 <title>Insert title here</title>
 </head>
 <body>
-	
-		
-	<%
-	//create cookies to]
-	Cookie[] cookies = null;
 
-	if(request != null){
-		cookies = request.getCookies();
-		System.out.println(request.getCookies());
-		if(cookies != null){
-			boolean hasCookie=false;
-			for(Cookie cookie : cookies){
-				// if expected cookie is found
-				if(cookie.getName().equals("cs5300p1a")){
-					String content;
-					String tempStr = cookie.getValue();
-					String[] tempArray = tempStr.split("/");
-					%>
+	
+					<jsp:useBean id="Session" type="project1a.session" scope="request">
+					</jsp:useBean>
 					<div id="horizontalBar" >
-						<p>NetId:cs2238   Session:<%= tempArray[0] %>  Version:<%=tempArray[1] %>  Date:<%=tempArray[3] %> </p>
+						<p>NetId:cs2238   Session:${Session.sessionId} Version:${Session.versionNum}  Date:${Session.curTime}</p>
 					<%
 					System.out.println("found the cookie");
-					if(Integer.parseInt(tempArray[1])==1) content="Hello User";
-					else content = tempArray[2];
+					//if(Integer.parseInt(tempArray[1])==0) content="Hello User";
+					//else content =curSession.message;
 					%>
-					<h1 id="hello"><%= content %></h1>
-					<%
-					hasCookie=true;
-					%>
+					<h1 id="hello">${Session.message}</h1>
 					<form action="index" method="GET" >
 						<input type="submit" value="replace">
 						<input type="text" name="content">
@@ -43,15 +26,7 @@
 					<a href="index?action=refresh"><button type="button">Refresh</button></a><br>
 					<a href="index?action=logout"><button type="button">Logout</button></a>
 					<br><br>
-					<p>Cookie:<%= tempStr%> Expires:<%=tempArray[4] %></p>
-				<%
-					break;
-				}
-			}			
-		}
-	}
-	%>
-				
+					<p>Cookie:${Session.sessionId}_${Session.versionNum} Expires:${Session.expireTime}</p>				
 		
 		
 	</div>
