@@ -1,5 +1,6 @@
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.DateFormat;
@@ -21,7 +22,7 @@ import project1a.session;
 @WebServlet("/welcome")
 public class welcome extends HttpServlet {
 	private static final long serialVersionUID = 1L;
-	private HashMap<Integer, session> sessionManagment = new HashMap<Integer,session>();
+	private ConcurrentHashMap <Integer, session> sessionManagment = new ConcurrentHashMap<Integer,session>();
     public String cookieName="cs5300p1a";
     public int latestSessionId=0;
     /**
@@ -48,6 +49,11 @@ public class welcome extends HttpServlet {
         		if(cookie.getName().equals(cookieName)){
         			String temp = cookie.getValue();
         			int curSessionId = Integer.parseInt(temp.split("_")[0]);
+        			Calendar calobj = Calendar.getInstance();
+            		Date now = calobj.getTime();
+        			for(session s : sessionManagment.values() ){
+        				if(now.after(s.getExpireTime())) sessionManagment.remove(s.getSessionId());
+        			}
         			if(sessionManagment.containsKey(curSessionId)){
         				firstTimeUser = false;
             			expectedCookie=cookie;
@@ -67,7 +73,7 @@ public class welcome extends HttpServlet {
     		String message = "Hello User";
     		Calendar calobj = Calendar.getInstance();
     		Date curDateTime = calobj.getTime();		
-    		Date exprieDateTime= new Date(curDateTime.getTime()+5000);
+    		Date exprieDateTime= new Date(curDateTime.getTime()+50000);
     		
     		session newSession = new session();
     		newSession.setSessionId(sessionID);
@@ -80,6 +86,7 @@ public class welcome extends HttpServlet {
     		//generate a cookie, add the cookie to repsonse
     		//also, generate a session and pass it to jsp for building the page
     		Cookie cookie = cookieGeneration(sessionID, versionNum);
+    		
     		req.setAttribute("Session", newSession);
     		res.addCookie(cookie);
     		req.getRequestDispatcher("/index.jsp").forward(req, res);
@@ -112,7 +119,7 @@ public class welcome extends HttpServlet {
         			curSession.setVersionNum(versionNum+1);
             		calobj = Calendar.getInstance();
             		Date curDateTime2 = calobj.getTime();
-            		Date expireDateTime2= new Date((curDateTime2.getTime()+5000));
+            		Date expireDateTime2= new Date((curDateTime2.getTime()+50000));
             		curSession.setCurTime( curDateTime2);
             		curSession.setExpireTime(expireDateTime2);
             		sessionManagment.put(curSessionID, curSession);
@@ -152,7 +159,7 @@ public class welcome extends HttpServlet {
             		}
             		Calendar calobj2 = Calendar.getInstance();
             		Date curDateTime = calobj2.getTime();
-            		Date exprieDateTime= new Date((curDateTime.getTime()+5000));
+            		Date exprieDateTime= new Date((curDateTime.getTime()+50000));
             		curSession.setCurTime(curDateTime);
             		curSession.setExpireTime(exprieDateTime);
             		sessionManagment.put(curSessionID, curSession);
@@ -191,7 +198,7 @@ public class welcome extends HttpServlet {
             			curSession.setVersionNum(versionNum+1);
                 		Calendar calobj2 = Calendar.getInstance();
                 		Date curDateTime = calobj2.getTime();
-                		Date expireDateTime= new Date((curDateTime.getTime())+5000);
+                		Date expireDateTime= new Date((curDateTime.getTime())+50000);
                 		curSession.setCurTime(curDateTime);
                 		curSession.setExpireTime(expireDateTime);
                 		sessionManagment.put(curSessionID, curSession);
@@ -275,6 +282,7 @@ public class welcome extends HttpServlet {
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		// TODO Auto-generated method stub
+		System.out.println("go to doGet!!!!");
 		doGet(request, response);
 	}
 

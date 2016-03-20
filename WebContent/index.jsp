@@ -7,28 +7,40 @@
 <title>Insert title here</title>
 </head>
 <body>
-
+<script>
+function validation(){
+	var text = document.getElementById("inputText").value;
+	var len = text.length;
+	if(len>512) {
+		document.getElementById("warning").innerText="words limit has been reached!";
+	}else{
+		document.getElementById("warning").innerText="";
+	}
 	
-					<jsp:useBean id="Session" type="project1a.session" scope="request">
-					</jsp:useBean>
-					<div id="horizontalBar" >
-						<p>NetId:cs2238   Session:${Session.sessionId} Version:${Session.versionNum}  Date:${Session.curTime}</p>
-					<%
-					System.out.println("found the cookie");
-					//if(Integer.parseInt(tempArray[1])==0) content="Hello User";
-					//else content =curSession.message;
-					%>
-					<h1 id="hello">${Session.message}</h1>
-					<form action="index" method="GET" >
-						<input type="submit" value="replace">
-						<input type="text" name="content">
-					</form><br>
-					<a href="index?action=refresh"><button type="button">Refresh</button></a><br>
-					<a href="index?action=logout"><button type="button">Logout</button></a>
-					<br><br>
-					<p>Cookie:${Session.sessionId}_${Session.versionNum} Expires:${Session.expireTime}</p>				
-		
-		
-	</div>
+}
+function alertOverLong(){
+	var text = document.getElementById("inputText").value;
+	var len = text.length;
+	if(len>512){
+		alert("Please limit your letters within 512!");
+		return false;
+	}else return true;
+	
+}
+</script>
+		<jsp:useBean id="Session" type="project1a.session" scope="request" />
+		<div id="horizontalBar" >
+			<p>NetId:cs2238&nbsp;&nbsp;Session:0_${Session.sessionId}&nbsp;&nbsp;Version:${Session.versionNum}&nbsp;&nbsp;Date:${Session.curTime}</p>
+			<h1 id="hello">${Session.message}</h1>
+			<form action="index" method="GET" onsubmit="return alertOverLong()">
+				<input type="submit" value="replace" >
+				<input type="text" name="content" id="inputText" onkeydown="validation()" /> <p id="warning"></p>
+			</form><br>
+			<a href="index?action=refresh"><button type="button">Refresh</button></a><br><br>
+			<a href="index?action=logout"><button type="button">Logout</button></a>
+			<br><br>
+			<p>Cookie:0_${Session.sessionId}_${Session.versionNum}_0_0 &nbsp;&nbsp; Expires:${Session.expireTime}</p>				
+			
+		</div>
 </body>
 </html>
