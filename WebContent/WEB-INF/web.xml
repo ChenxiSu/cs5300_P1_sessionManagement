@@ -2,7 +2,7 @@
 <web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:web="http://xmlns.jcp.org/xml/ns/javaee" xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd">
   <servlet>
     <servlet-name>changeText</servlet-name>
-    <servlet-class>welcome</servlet-class>
+    <servlet-class>SessionManager</servlet-class>
   </servlet>
   <servlet-mapping>
     <servlet-name>changeText</servlet-name>

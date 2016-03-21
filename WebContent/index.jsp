@@ -32,12 +32,12 @@ function alertOverLong(){
 		<div id="horizontalBar" >
 			<p>NetId:cs2238&nbsp;&nbsp;Session:0_${Session.sessionId}&nbsp;&nbsp;Version:${Session.versionNum}&nbsp;&nbsp;Date:${Session.curTime}</p>
 			<h1 id="hello">${Session.message}</h1>
-			<form action="index" method="GET" onsubmit="return alertOverLong()">
-				<input type="submit" value="replace" >
+			<form action="index" method="POST" onsubmit="return alertOverLong()">
+				<input type="submit" name="action" value="replace" >
 				<input type="text" name="content" id="inputText" onkeydown="validation()" /> <p id="warning"></p>
-			</form><br>
-			<a href="index?action=refresh"><button type="button">Refresh</button></a><br><br>
-			<a href="index?action=logout"><button type="button">Logout</button></a>
+				<input type="submit" name="action" value="refresh" /><br><br>
+				<input type="submit" name="action" value="logout">
+			</form>
 			<br><br>
 			<p>Cookie:0_${Session.sessionId}_${Session.versionNum}_0_0 &nbsp;&nbsp; Expires:${Session.expireTime}</p>				
 			

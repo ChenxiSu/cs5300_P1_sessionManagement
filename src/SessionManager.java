@@ -19,8 +19,8 @@ import project1a.session;
 /**
  * Servlet implementation class welcome
  */
-@WebServlet("/welcome")
-public class welcome extends HttpServlet {
+@WebServlet("/SessionManager")
+public class SessionManager extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	private ConcurrentHashMap <Integer, session> sessionManagment = new ConcurrentHashMap<Integer,session>();
     public String cookieName="cs5300p1a";
@@ -28,7 +28,7 @@ public class welcome extends HttpServlet {
     /**
      * @see HttpServlet#HttpServlet()
      */
-    public welcome() {
+    public SessionManager() {
         super();
         // TODO Auto-generated constructor stub
     }
@@ -38,7 +38,6 @@ public class welcome extends HttpServlet {
 	 */
     public void doGet(HttpServletRequest req,HttpServletResponse res) throws ServletException, IOException{
     	res.setContentType("text/html");  
-    	System.out.println("aaaddd");
     	// rewrite first time user
     	Cookie[] cookies = req.getCookies();
     	boolean firstTimeUser = true;
@@ -48,7 +47,7 @@ public class welcome extends HttpServlet {
     		for(Cookie cookie:cookies){
         		if(cookie.getName().equals(cookieName)){
         			String temp = cookie.getValue();
-        			int curSessionId = Integer.parseInt(temp.split("_")[0]);
+        			int curSessionId = Integer.parseInt(temp.split("_")[1]);
         			Calendar calobj = Calendar.getInstance();
             		Date now = calobj.getTime();
         			for(session s : sessionManagment.values() ){
@@ -63,17 +62,17 @@ public class welcome extends HttpServlet {
         	}
     	}
     	
-    	
+    	// a new session should be created and assigned
     	if(firstTimeUser){
     		//create a new cookie, generate a serize of values and connect them in a string
-    		System.out.println("I am a first time user");
+    		System.out.println("dealing with a first time user");
     		int sessionID = latestSessionId+1;
     		latestSessionId++;
     		int versionNum = 0;
     		String message = "Hello User";
     		Calendar calobj = Calendar.getInstance();
     		Date curDateTime = calobj.getTime();		
-    		Date exprieDateTime= new Date(curDateTime.getTime()+50000);
+    		Date exprieDateTime= new Date(curDateTime.getTime()+30000);
     		
     		session newSession = new session();
     		newSession.setSessionId(sessionID);
@@ -92,34 +91,35 @@ public class welcome extends HttpServlet {
     		req.getRequestDispatcher("/index.jsp").forward(req, res);
     	}
     	else{
-    		//not first time user, get the request info and current cookie info		
-    		String replaceMessage = req.getParameter("content");
+    		//already a user 		
+    		
+    		
     		String requestAction = req.getParameter("action"); 
+    		
     		String content = expectedCookie.getValue();
     		String[] cookieArray = content.split("_");    		
-    		int curSessionID = Integer.parseInt(cookieArray[0]);
+    		int curSessionID = Integer.parseInt(cookieArray[1]);
     		
-    		//situation 1: an already logged in user access through same url again
-    		if(replaceMessage==null && requestAction== null){
+    		//situation 1: with no request for action but with cookie info
+    		if(requestAction == null){
     			//just need to refresh
-    			System.out.println("and I am refreshing");
+    			System.out.println("dealing with request coming through url");
     			session curSession = sessionManagment.get(curSessionID);
     			String message = curSession.getMessage();
     			//1.whether timeout or not
     			Date expectedExpireTime=curSession.getExpireTime();
-    			Calendar calobj = Calendar.getInstance();
-        		Date now = calobj.getTime();
+    			boolean inExpiredState = timeout(expectedExpireTime);
         		
-        		if(now.after(expectedExpireTime)){
+        		if(inExpiredState){
         			// delete the curSession and create new session
             		curSession = timeoutCreateNewSession(curSessionID);
         		}else{
         			// not time out, just update some value
         			int versionNum = curSession.getVersionNum();
         			curSession.setVersionNum(versionNum+1);
-            		calobj = Calendar.getInstance();
+            		Calendar calobj = Calendar.getInstance();
             		Date curDateTime2 = calobj.getTime();
-            		Date expireDateTime2= new Date((curDateTime2.getTime()+50000));
+            		Date expireDateTime2= new Date((curDateTime2.getTime()+30000));
             		curSession.setCurTime( curDateTime2);
             		curSession.setExpireTime(expireDateTime2);
             		sessionManagment.put(curSessionID, curSession);
@@ -131,105 +131,88 @@ public class welcome extends HttpServlet {
         		req.getRequestDispatcher("/index.jsp").forward(req, res);
     		}
     		
-    		// situation 2 :user asked to replace the display string
-    		else if(replaceMessage!= null ){
-    			String requestContent = req.getParameter("content");
-    			
-    			//update the current session
-    			session curSession = sessionManagment.get(curSessionID);
-    			
-    			Date expectedExpireTime=curSession.getExpireTime();
-    			Calendar calobj = Calendar.getInstance();
-        		Date now = calobj.getTime();
-        		Cookie newCookie;
-        		if(now.after(expectedExpireTime)){
-        			//time out
-        			session newSession = timeoutCreateNewSession(curSessionID);
-        			newCookie = cookieGeneration(newSession.getSessionId(),newSession.getVersionNum());
-        			System.out.println(newCookie.getValue());
-        			System.out.println(newSession.getVersionNum());
-        			req.setAttribute("Session", newSession);
-        		}
-        		else{
-        			//not time out
-        			int versionNm = curSession.getVersionNum();
-        			curSession.setVersionNum(versionNm+1);
-            		if(!requestContent.equals("")){
-            			curSession.setMessage(requestContent);
-            		}
-            		Calendar calobj2 = Calendar.getInstance();
-            		Date curDateTime = calobj2.getTime();
-            		Date exprieDateTime= new Date((curDateTime.getTime()+50000));
-            		curSession.setCurTime(curDateTime);
-            		curSession.setExpireTime(exprieDateTime);
-            		sessionManagment.put(curSessionID, curSession);
-            		newCookie = cookieGeneration(curSessionID,curSession.getVersionNum());
-            		req.setAttribute("Session", curSession);
-        		}
-        		
-        		res.addCookie(newCookie);
-        		req.getRequestDispatcher("/index.jsp").forward(req, res);
-    		}
-    		
-    		//situation 3: user asked to refresh or log out
-    		else if(requestAction!=null){
-    			if(requestAction.equals("logout")) {
-        			//logout
-        			sessionManagment.remove(curSessionID);
-        			res.sendRedirect("logout.html");
-        		}
-        		else if(requestAction.equals("refresh")){
-        			//refresh
-        			System.out.println("and I am refreshing");
+    		// situation 2 :user with request for actions
+    		else{
+    			// request for replace
+    			if(requestAction.equals("replace") ){
+    				String requestContent = req.getParameter("content");
+    				//update the current session
         			session curSession = sessionManagment.get(curSessionID);
         			
-
         			Date expectedExpireTime=curSession.getExpireTime();
-        			Calendar calobj = Calendar.getInstance();
-            		Date now = calobj.getTime();
-            		
-            		if(now.after(expectedExpireTime)){
-            			//time out
+        			boolean inExpiredState=timeout(expectedExpireTime);
+            		Cookie newCookie;
+            		//session expired
+            		if(inExpiredState){
+            			session newSession = timeoutCreateNewSession(curSessionID);
+            			newCookie = cookieGeneration(newSession.getSessionId(),newSession.getVersionNum());
+            			System.out.println(newCookie.getValue());
+            			System.out.println(newSession.getVersionNum());
+            			req.setAttribute("Session", newSession);
+            		}
+            		// session still active
+            		else{
+            			int versionNm = curSession.getVersionNum();
+            			curSession.setVersionNum(versionNm+1);
+                		if(!requestContent.equals("")){
+                			curSession.setMessage(requestContent);
+                		}
+                		Calendar calobj2 = Calendar.getInstance();
+                		Date curDateTime = calobj2.getTime();
+                		Date exprieDateTime= new Date((curDateTime.getTime()+30000));
+                		curSession.setCurTime(curDateTime);
+                		curSession.setExpireTime(exprieDateTime);
+                		sessionManagment.put(curSessionID, curSession);
+                		newCookie = cookieGeneration(curSessionID,curSession.getVersionNum());
+                		req.setAttribute("Session", curSession);
+                		res.addCookie(newCookie);
+                		req.getRequestDispatcher("/index.jsp").forward(req, res);
+            		}
+    			}
+    			else if(requestAction.equals("refresh")){
+    				System.out.println("dealing with refresh request");
+        			session curSession = sessionManagment.get(curSessionID);
+        			
+        			Date expectedExpireTime=curSession.getExpireTime();
+        			boolean inExpiredState = timeout(expectedExpireTime);
+            		//session expired
+            		if(inExpiredState){
             			curSession = timeoutCreateNewSession(curSessionID);
             		}
+            		//session still active
             		else{
-            			//not time out
             			int versionNum = curSession.getVersionNum();
             			curSession.setVersionNum(versionNum+1);
                 		Calendar calobj2 = Calendar.getInstance();
                 		Date curDateTime = calobj2.getTime();
-                		Date expireDateTime= new Date((curDateTime.getTime())+50000);
+                		Date expireDateTime= new Date((curDateTime.getTime())+30000);
                 		curSession.setCurTime(curDateTime);
                 		curSession.setExpireTime(expireDateTime);
                 		sessionManagment.put(curSessionID, curSession);
             		}
-        			
-        			
-        			
             		Cookie newCookie = cookieGeneration(curSession.getSessionId(),curSession.getVersionNum());
             		req.setAttribute("Session", curSession);
             		res.addCookie(newCookie);
             		req.getRequestDispatcher("/index.jsp").forward(req, res);
-        		}
-    		}
-    		else{
-    			
-    		}
-    		
-    			
-    		
-    		
-    		
-    		/*
-    		 * Ignore the version number first, but should be seriously considered 
-    		 * in next half
-    		 */
-
-    		
+    			}
+    			else{
+    				if(requestAction.equals("logout")){
+    					//logout
+            			sessionManagment.remove(curSessionID);
+            			res.sendRedirect("logout.html");
+    				}
+    			}
+    		}    		
     	}
-
-    	
 	}
+    // decide whether session has expired or not
+    public boolean timeout(Date expireTime){
+		Calendar calobj = Calendar.getInstance();
+		Date now = calobj.getTime();
+		if(now.after(expireTime)) 	return true;
+		else return false;
+    }
+    
     public session timeoutCreateNewSession(int id){
     	sessionManagment.remove(id);
     	session newSession = new session();
@@ -239,7 +222,7 @@ public class welcome extends HttpServlet {
 		newSession.setVersionNum(0);
 		Calendar calobj1 = Calendar.getInstance();
 		Date curDateTime = calobj1.getTime();
-		Date expireDateTime1= new Date((curDateTime.getTime()+5000));
+		Date expireDateTime1= new Date((curDateTime.getTime()+30000));
 		newSession.setCurTime( curDateTime);
 		newSession.setExpireTime(expireDateTime1);
 		newSession.setMessage("Hello User");    
@@ -252,7 +235,7 @@ public class welcome extends HttpServlet {
 		DateFormat df = new SimpleDateFormat("EEEE dd MM yy HH:mm:ss z");
 		//String dateTimeStr = df.format(dt);
 		//String expireDtStr = df.format(expireDt);
-    	String output = ""+sessionId+"_"+versionNum;//+"/"+message+"/"+dt.toString()+"/"+expireDt.toString();
+    	String output = ""+0+"_"+sessionId+"_"+versionNum+"_"+0+"_"+0;//+"/"+message+"/"+dt.toString()+"/"+expireDt.toString();
     	Cookie cookie= new Cookie(cookieName, output);
 		cookie.setMaxAge(2*60);//?????????
 		return cookie;
@@ -282,7 +265,7 @@ public class welcome extends HttpServlet {
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		// TODO Auto-generated method stub
-		System.out.println("go to doGet!!!!");
+		System.out.println("request recieved, redirect to doGet method");
 		doGet(request, response);
 	}
 
